@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
     std::string dev = "/dev/ttyS5";  // UART5 default as requested
     int baud = 115200;
 
-    static option long_opts[] = {
+    static struct option long_opts[] = {
         {"dev",  required_argument, nullptr, 'd'},
         {"baud", required_argument, nullptr, 'b'},
         {"help", no_argument,       nullptr, 'h'},
