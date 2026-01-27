@@ -78,12 +78,9 @@ int openUart(const std::string& dev, int baud) {
     return fd;
 }
 
-// Waveshare calls the last byte "Parity Bit" in the wiki.
-// The wiki doesn't define the exact algorithm on that page.
-// This implementation uses a common embedded convention: 8-bit sum of the first 5 bytes.
+// Waveshare "Parity Bit" is XOR of the first 5 bytes (per their demo code).
 uint8_t calcParity(uint8_t reg, uint8_t paramH, uint8_t paramL) {
-    uint16_t sum = static_cast<uint16_t>(kHdr1) + kHdr2 + reg + paramH + paramL;
-    return static_cast<uint8_t>(sum & 0xFF);
+    return static_cast<uint8_t>((((kHdr1 ^ kHdr2) ^ reg) ^ paramH) ^ paramL);
 }
 
 void writeRegister16(int fd, uint8_t reg, uint16_t value) {
@@ -99,6 +96,8 @@ void writeRegister16(int fd, uint8_t reg, uint16_t value) {
                                  " bytes, errno=" + std::to_string(errno) + " (" +
                                  std::string(std::strerror(errno)) + ")");
     }
+    // Match the demo: small delay between commands so the MCU can process them.
+    ::usleep(100 * 1000);
 }
 
 [[noreturn]] void usage(const char* argv0) {
