@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     if (DEV_ModuleInit()==1)return 1;
     
     if(Data_Interface == UART_Interfac){
-        DEV_UART_Init("/dev/ttyS0");
+        DEV_UART_Init("/dev/ttyS4");
         printf("UART\r\n");
     }else if(Data_Interface == I2C_Interfac){
         DEV_I2C_Init(I2C_ADDRESS);
