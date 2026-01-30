@@ -1,41 +1,42 @@
+# Makefile for 2-CH SCR HAT - Orange Pi Zero 2W / Ubuntu
+#
+# Build: make
+# Clean: make clean
+# Run:   sudo ./main
+
 DIR_BIN = ./bin
 DIR_Config = ./lib/Config
 DIR_Examples = ./examples
-DIR_Drive =  ./lib/2-CH_SCR_HAT
+DIR_Drive = ./lib/2-CH_SCR_HAT
 
 OBJ_C = $(wildcard ${DIR_Examples}/*.c ${DIR_Config}/*.c ${DIR_Drive}/*.c)
 OBJ_O = $(patsubst %.c,${DIR_BIN}/%.o,$(notdir ${OBJ_C}))
 
 TARGET = main
-#BIN_TARGET = ${DIR_BIN}/${TARGET}
 
 CC = gcc
+CFLAGS = -g -O2 -Wall
+LIB = -lm -lpthread
 
-DEBUG = -g -O0 -Wall
-CFLAGS += $(DEBUG)
+# Create bin directory
+$(shell mkdir -p $(DIR_BIN))
 
-# USELIB = USE_BCM2835_LIB
-# USELIB = USE_WIRINGPI_LIB
-USELIB = USE_DEV_LIB
-DEBUG = -D $(USELIB)
-ifeq ($(USELIB), USE_BCM2835_LIB)
-    LIB = -lbcm2835 -lm 
-else ifeq ($(USELIB), USE_WIRINGPI_LIB)
-    LIB = -lwiringPi -lm 
-endif
-
-${TARGET}:${OBJ_O}
+${TARGET}: ${OBJ_O}
 	$(CC) $(CFLAGS) $(OBJ_O) -o $@ $(LIB)
+	@echo "Build complete: $(TARGET)"
+	@echo "Run with: sudo ./$(TARGET)"
 
-${DIR_BIN}/%.o : $(DIR_Examples)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ $(LIB) -I $(DIR_Config) -I $(DIR_Drive) 
-    
-${DIR_BIN}/%.o : $(DIR_Drive)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ $(LIB) -I $(DIR_Config)
-    
-${DIR_BIN}/%.o : $(DIR_Config)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ $(LIB)
+${DIR_BIN}/%.o: $(DIR_Examples)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@ -I $(DIR_Config) -I $(DIR_Drive)
 
-clean :
-	rm $(DIR_BIN)/*.* 
-	rm $(TARGET) 
+${DIR_BIN}/%.o: $(DIR_Drive)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@ -I $(DIR_Config)
+
+${DIR_BIN}/%.o: $(DIR_Config)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -rf $(DIR_BIN)
+	rm -f $(TARGET)
+
+.PHONY: clean

@@ -1,70 +1,69 @@
+/*****************************************************************************
+* | File        :   DEV_Config.h
+* | Author      :   Waveshare team (modified for Orange Pi Zero 2W)
+* | Function    :   Hardware underlying interface - Orange Pi / Ubuntu
+* | Info        :   Simplified for Orange Pi Zero 2W with UART5
+*----------------
+* |	This version:   V3.0
+* | Date        :   2026-01-30
+* | Info        :   Orange Pi Zero 2W / Ubuntu 22.04 only
+*
+******************************************************************************/
 #ifndef _DEV_CONFIG_H_
 #define _DEV_CONFIG_H_
-/***********************************************************************************************************************
-			------------------------------------------------------------------------
-			|\\\																///|
-			|\\\					Hardware interface							///|
-			------------------------------------------------------------------------
-***********************************************************************************************************************/
-#ifdef USE_BCM2835_LIB
-    #include <bcm2835.h>
-#elif USE_WIRINGPI_LIB
-    #include <wiringPi.h>
-    #include <wiringPiI2C.h>
-    #include <wiringSerial.h>
-#elif USE_DEV_LIB
-    #include "sysfs_gpio.h"
-    #include "dev_hardware_UART.h"
-#endif
 
 #include <stdint.h>
-#include "Debug.h"
-
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-#define DEV_SPI 0
-#define DEV_I2C 1
-#define DEV_UART 1
+#include "sysfs_gpio.h"
+#include "dev_hardware_UART.h"
+#include "Debug.h"
 
 /**
- * data
+ * Data types
 **/
 #define UBYTE   uint8_t
 #define UWORD   uint16_t
 #define UDOUBLE uint32_t
 
-/*-------------------------------------------------*/
+/**
+ * Orange Pi Zero 2W UART5 device
+ * Pin 8: UART5_TX (PC0)
+ * Pin 10: UART5_RX (PC1)
+**/
+#define UART5_DEVICE "/dev/ttyS5"
+
+/**
+ * Orange Pi Zero 2W GPIO (H618 SoC)
+ * GPIO number formula: (Port - 'A') * 32 + Pin
+ * Example: PC11 = (2 * 32) + 11 = 75
+**/
+#define GPIO_PORT_A  0
+#define GPIO_PORT_C  64
+#define GPIO_PORT_G  192
+#define GPIO_PORT_H  224
+#define GPIO_PORT_I  256
+
+/*---------- Module functions ----------*/
 uint8_t DEV_ModuleInit(void);
 void    DEV_ModuleExit(void);
 
+/*---------- GPIO functions ----------*/
 void DEV_GPIO_Mode(UWORD Pin, UWORD Mode);
 void DEV_Digital_Write(UWORD Pin, uint8_t Value);
 uint8_t DEV_Digital_Read(UWORD Pin);
 
+/*---------- Delay function ----------*/
 void DEV_Delay_ms(UDOUBLE xms);
 
-#if DEV_I2C
-    void DEV_I2C_Init(uint8_t Add);
-    void I2C_Write_Byte(uint8_t Cmd, uint8_t value);
-    int I2C_Read_Byte(uint8_t Cmd);
-    int I2C_Read_Word(uint8_t Cmd);
-#endif
+/*---------- UART functions ----------*/
+void DEV_UART_Init(const char *Device);
+void UART_Write_Byte(uint8_t data);
+int  UART_Read_Byte(void);
+void UART_Set_Baudrate(uint32_t Baudrate);
+int  UART_Write_nByte(uint8_t *pData, uint32_t Len);
 
-#if DEV_SPI
-    void DEV_SPI_WriteByte(uint8_t Value);
-    void DEV_SPI_Write_nByte(uint8_t *pData, uint32_t Len);
-#endif
-
-#if DEV_UART
-    void DEV_UART_Init(char *Device);
-    void UART_Write_Byte(uint8_t data);
-    int UART_Read_Byte(void);
-    void UART_Set_Baudrate(uint32_t Baudrate);
-    int UART_Write_nByte(uint8_t *pData, uint32_t Lan);
-#endif
-int get_char(void);
-int getch(void);
 #endif
