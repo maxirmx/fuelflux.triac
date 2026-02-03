@@ -1,60 +1,74 @@
-# Waveshare 2-CH TRIAC HAT — UART CLI (ON/OFF only)
+# Orange Pi Zero 2W – Waveshare RPi Relay Board – CH1 demo (C++ / libgpiod)
 
-A tiny C++ test application to control **Channel 1** of the Waveshare **2-CH TRIAC HAT** via **UART**.
-It supports exactly two commands:
+This is a minimal C++ demo to control an **active-low** relay input from an
+Orange Pi Zero 2W using `libgpiod`.
 
-- `on1`  — turn **ON** line/channel 1
-- `off1` — turn **OFF** line/channel 1
+Target pin in your setup:
+- Physical pin **40**
+- Signal name **PI03**
+- Line offset **259** (from your `gpio readall`)
 
-## Protocol (per Waveshare wiki)
+Relay board:
+- Waveshare "RPi Relay Board" (active LOW)
+  - ON  = drive GPIO **LOW**
+  - OFF = drive GPIO **HIGH**
 
-UART frame format:
+## Package contents
+- `main.cpp` – small GPIO wrapper + demo loop
+- `CMakeLists.txt` – build with CMake + pkg-config
 
-`0x57 0x68 <reg> <paramH> <paramL> <parity>`
-
-This tool implements **parity = (sum of the previous 5 bytes) & 0xFF**.
-If your board uses a different parity/checksum, adjust `calcParity()` in `src/triac_uart_cli.cpp`.
-
-Relevant registers:
-
-- `0x01` Mode: `0` = switch mode (on/off only), `1` = phase-angle mode
-- `0x02` Channel enable: `1` = CH1 on, `0` = all off
-
-## Build (Ubuntu)
-
+## Install dependencies (Armbian/Debian/Ubuntu)
 ```bash
 sudo apt-get update
-sudo apt-get install -y g++ cmake
-cmake -S . -B build
-cmake --build build -j
+sudo apt-get install -y g++ cmake pkg-config libgpiod-dev gpiod
 ```
 
-Binary will be at: `build/triac_uart_cli`
+## Build
+```bash
+mkdir -p build
+cd build
+cmake ..
+cmake --build .
+```
 
 ## Run
 
-Default device is **UART5**: `/dev/ttyS5` at **115200 8N1**.
+Default is `gpiochip0` line `259` and 1s toggle period:
 
 ```bash
-sudo ./build/triac_uart_cli on1
-sudo ./build/triac_uart_cli off1
+sudo ./relay_demo
 ```
 
-Optional flags:
+Override chip/line/period:
 
 ```bash
-./build/triac_uart_cli --dev /dev/ttyS5 --baud 115200 on1
+sudo ./relay_demo gpiochip1 259 500
 ```
 
-## Permissions (recommended)
+## Notes / troubleshooting
 
-Instead of running as root, add your user to `dialout`:
+1) **The line starts as input** (`unused input` in `gpioinfo`). The program does:
+   - request line as OUTPUT
+   - set initial state to **LOW** immediately (relay ON)
 
+2) Some systems release GPIO when a short `gpioset` exits. This demo keeps the line
+   requested until the program exits, so the output state is maintained.
+
+3) To find correct chip/line on your system:
 ```bash
-sudo usermod -aG dialout $USER
-# log out and log in again
+gpiofind PI03
+gpioinfo | grep -n "line .*259"
 ```
+
+4) Permissions: either run as root, or adjust udev rules / group membership for
+`/dev/gpiochip*`.
 
 ## Safety
+Switching a 240VAC induction motor can generate transients.
+Use appropriate protection:
+- MOV across L–N near the relay/pump
+- Proper fusing / breaker
+- Correct earthing (PE)
 
-This board controls **mains voltage**. Use an insulated enclosure, proper wiring, and do not touch exposed circuitry.
+## New helper
+- `init_output_high()` – request the line as output and drive **HIGH** immediately (relay OFF).
