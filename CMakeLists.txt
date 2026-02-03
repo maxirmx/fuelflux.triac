@@ -1,11 +1,13 @@
-cmake_minimum_required(VERSION 3.16)
-project(triac_uart_cli LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.13)
+project(opiz2w_relay_demo LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(triac_uart_cli
-    src/triac_uart_cli.cpp
-)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GPIOD REQUIRED libgpiod)
 
-target_compile_options(triac_uart_cli PRIVATE -Wall -Wextra -Wpedantic)
+add_executable(relay_demo main.cpp)
+target_include_directories(relay_demo PRIVATE ${GPIOD_INCLUDE_DIRS})
+target_link_libraries(relay_demo PRIVATE ${GPIOD_LIBRARIES})
+target_compile_options(relay_demo PRIVATE ${GPIOD_CFLAGS_OTHER})
